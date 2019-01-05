@@ -1,4 +1,4 @@
-FROM ubuntu:18.04
+FROM ubuntu:disco
 
 ENV DEBIAN_FRONTEND noninteractive
 
@@ -27,7 +27,7 @@ RUN apt-get update && apt-get install -y \
     wget \
     libssl-dev \
     libffi-dev \
-    python3-dev \
+    python3.7-dev \
     python3-pip \
     python3-numpy \
     python3-nose \
@@ -55,17 +55,20 @@ RUN cd ~/torch && ./install.sh && \
     ./luarocks install tds
 
 RUN ln -s /root/torch/install/bin/* /usr/local/bin
-
-ADD . /root/openface
-
 RUN python3 -m pip install --upgrade --force pip
-RUN cd ~/openface && \
-    ./models/get-models.sh && \
-    pip3 install dlib && \
-    pip3 install -r requirements.txt && \
-    python3 setup.py install && \
+
+ADD models /root/openface/models
+RUN cd ~/openface && ./models/get-models.sh
+
+ADD requirements.txt /root/openface/requirements.txt
+ADD demos/web/requirements.txt /root/openface/demos/web/requirements.txt
+ADD training/requirements.txt /root/openface/training/requirements.txt
+RUN cd ~/openface && pip3 install -r requirements.txt && \
     pip3 install --user --ignore-installed -r demos/web/requirements.txt && \
     pip3 install -r training/requirements.txt
+
+ADD . /root/openface
+RUN cd ~/openface && python3 setup.py install
 
 EXPOSE 8000 9000
 CMD /bin/bash -l -c '/root/openface/demos/web/start-servers.sh'
